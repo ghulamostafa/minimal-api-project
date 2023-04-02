@@ -1,9 +1,26 @@
+using GetStartedDigitalOceanDotNET001;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var connectionString = 
+    "Server=digitalocean-db-do-user-6906066-0.b.db.ondigitalocean.com;" +
+    "Port=25060;" +
+    "Database=defaultdb;" +
+    "Uid=doadmin;" +
+    "Pwd=AVNS_h2LAREw0KACGaaN0SzH;" +
+    "SslMode=Require;" +
+    "Trust Server Certificate=true";
+
+builder
+    .Services
+    .AddDbContext<DigitalOceanDbContext>
+    (options => options.UseNpgsql(connectionString));
 
 var app = builder.Build();
 
@@ -34,6 +51,18 @@ app.MapGet("/weatherforecast", () =>
     return forecast;
 })
 .WithName("GetWeatherForecast");
+
+app.MapPost("/add-note", async (Note note, DigitalOceanDbContext db) =>
+{
+    await db.AddAsync(note);
+    await db.SaveChangesAsync();
+});
+
+app.MapGet("/get-notes", async (DigitalOceanDbContext db) =>
+{
+    var notes = await db.Notes.ToListAsync();
+    return notes;
+});
 
 app.Run();
 
